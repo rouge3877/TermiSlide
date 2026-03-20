@@ -7,6 +7,10 @@
     "export": "slidev export",
     "export-notes": "slidev export-notes"
   },
+  "dependencies": {
+    "@xterm/xterm": "^5.5.0",
+    "@xterm/addon-fit": "^0.10.0"
+  },
   "devDependencies": {
     "@slidev/cli": "workspace:*",
     "@slidev/theme-default": "catalog:themes",

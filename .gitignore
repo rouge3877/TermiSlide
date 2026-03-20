@@ -28,3 +28,8 @@ slides-export.md
 *slides-export.pptx
 .agents
 .claude
+
+# TermiSlide — v86 VM binaries (downloaded by scripts/fetch-v86-assets.sh)
+demo/starter/public/*.bin
+demo/starter/public/*.wasm
+demo/starter/public/libv86.js
