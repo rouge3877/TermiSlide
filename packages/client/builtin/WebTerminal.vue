@@ -142,7 +142,7 @@ onMounted(() => {
 
   term = new Terminal({
     cursorBlink: true,
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: '\'Cascadia Code\', \'Fira Code\', Menlo, Monaco, \'Courier New\', monospace',
     theme: {
       background: '#1e1e2e',
@@ -237,5 +237,11 @@ onUnmounted(() => {
 
 .web-terminal :deep(.xterm-viewport) {
   border-radius: 6px;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.web-terminal :deep(.xterm-viewport::-webkit-scrollbar) {
+  display: none; /* Chrome/Safari */
 }
 </style>

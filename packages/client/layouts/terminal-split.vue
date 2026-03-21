@@ -28,10 +28,10 @@ const props = withDefaults(defineProps<{
 
 <template>
   <div class="slidev-layout terminal-split flex w-full h-full">
-    <div class="col-left w-1/2 h-full overflow-auto p-8">
+    <div class="col-left h-full overflow-auto p-6">
       <slot />
     </div>
-    <div class="col-right w-1/2 h-full p-4 flex flex-col">
+    <div class="col-right h-full p-2 flex flex-col">
       <WebTerminal :env-name="props.env" :ws-url="props.wsUrl" class="flex-1" />
     </div>
   </div>
@@ -43,6 +43,20 @@ const props = withDefaults(defineProps<{
 }
 
 .col-left {
+  width: 42%;
+  flex-shrink: 0;
   border-right: 1px solid rgba(125, 125, 125, 0.2);
+  font-size: 0.85em;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.col-left::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+.col-right {
+  width: 58%;
+  flex-shrink: 0;
 }
 </style>
