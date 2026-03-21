@@ -1,9 +1,9 @@
 environments:
   - name: "shell-basics"
-    path: "./labs/shell-basics"
+    path: "../../labs/shell-basics"
 
   - name: "shell-tools"
-    path: "./labs/shell-tools"
+    path: "../../labs/shell-tools"
 
   - name: "shell-scripts"
-    path: "./labs/shell-scripts"
+    path: "../../labs/shell-scripts"
