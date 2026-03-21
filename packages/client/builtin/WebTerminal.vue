@@ -142,7 +142,7 @@ onMounted(() => {
 
   term = new Terminal({
     cursorBlink: true,
-    fontSize: 13,
+    fontSize: 12,
     fontFamily: '\'Cascadia Code\', \'Fira Code\', Menlo, Monaco, \'Courier New\', monospace',
     theme: {
       background: '#1e1e2e',
@@ -180,6 +180,17 @@ onMounted(() => {
     sendJSON({ type: 'input', data })
   })
 
+  // Let Shift+Arrow keys bubble up to Slidev for slide navigation.
+  // Return false = xterm ignores the key, letting the browser dispatch it normally.
+  term.attachCustomKeyEventHandler((event) => {
+    if (event.shiftKey && (event.key === 'ArrowLeft' || event.key === 'ArrowRight'))
+      return false
+    return true
+  })
+
+  // Auto-focus terminal so user can type immediately
+  term.focus()
+
   // Observe container resize for responsive terminal
   resizeObserver = new ResizeObserver(() => {
     requestAnimationFrame(() => performFit())
@@ -192,6 +203,8 @@ onMounted(() => {
 // Re-attach when envName changes (slide navigation triggers this)
 watch(() => props.envName, (newEnv) => {
   attachEnv(newEnv)
+  // Auto-focus terminal after slide switch
+  requestAnimationFrame(() => term?.focus())
 })
 
 onUnmounted(() => {

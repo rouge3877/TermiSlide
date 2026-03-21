@@ -46,13 +46,30 @@ const props = withDefaults(defineProps<{
   width: 42%;
   flex-shrink: 0;
   border-right: 1px solid rgba(125, 125, 125, 0.2);
-  font-size: 0.85em;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
+  font-size: 0.8em;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .col-left::-webkit-scrollbar {
-  display: none; /* Chrome/Safari */
+  display: none;
+}
+
+/* Force code blocks to wrap instead of showing horizontal scrollbar */
+.col-left :deep(pre) {
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-x: hidden;
+}
+
+.col-left :deep(pre code) {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* Hide any stray scrollbars inside code blocks */
+.col-left :deep(.slidev-code-wrapper) {
+  overflow-x: hidden;
 }
 
 .col-right {
