@@ -16,12 +16,14 @@
 -->
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import WebTerminal from '../builtin/WebTerminal.vue'
-import { useSlideContext } from '../context'
 
-const { $frontmatter } = useSlideContext()
-const envName = computed(() => ($frontmatter as any)?.env ?? 'default')
+const props = withDefaults(defineProps<{
+  env?: string
+  wsUrl?: string
+}>(), {
+  env: 'default',
+})
 </script>
 
 <template>
@@ -30,7 +32,7 @@ const envName = computed(() => ($frontmatter as any)?.env ?? 'default')
       <slot />
     </div>
     <div class="col-right w-1/2 h-full p-4 flex flex-col">
-      <WebTerminal :env-name="envName" class="flex-1" />
+      <WebTerminal :env-name="props.env" :ws-url="props.wsUrl" class="flex-1" />
     </div>
   </div>
 </template>

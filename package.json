@@ -68,6 +68,7 @@
     "vite": "catalog:prod",
     "vitest": "catalog:dev",
     "vue-tsc": "catalog:dev",
+    "ws": "catalog:",
     "zx": "catalog:dev"
   },
   "resolutions": {
