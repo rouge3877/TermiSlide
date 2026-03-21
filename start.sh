@@ -51,11 +51,15 @@ usage() {
 cleanup() {
     echo ""
     echo -e "${YELLOW}正在关闭...${NC}"
-    # 移除 trap 避免重复触发
     trap - EXIT INT TERM
-    if [ -n "$FRONTEND_PID" ] && kill -0 "$FRONTEND_PID" 2>/dev/null; then
-        kill "$FRONTEND_PID" 2>/dev/null
-        wait "$FRONTEND_PID" 2>/dev/null || true
+    # 终止前端：找到占用 3030 端口的进程
+    if [ -n "$FRONTEND_PID" ]; then
+        kill "$FRONTEND_PID" 2>/dev/null || true
+        local vite_pid
+        vite_pid=$(lsof -t -i:3030 2>/dev/null | head -1 || true)
+        if [ -n "$vite_pid" ]; then
+            kill "$vite_pid" 2>/dev/null || true
+        fi
         echo -e "  ${GREEN}✔${NC} 前端已停止"
     fi
     if [ -n "$DAEMON_PID" ] && kill -0 "$DAEMON_PID" 2>/dev/null; then
@@ -174,12 +178,23 @@ npx slidev slides.md --open --log=info &
 FRONTEND_PID=$!
 cd "$ROOT_DIR"
 
-sleep 3
-if ! kill -0 "$FRONTEND_PID" 2>/dev/null; then
-    echo -e "${RED}✗ 前端启动失败${NC}"
-    exit 1
+# Slidev 的 Vite 服务器需要几秒编译，等待端口就绪
+SLIDEV_PORT=3030
+echo -n "  等待前端就绪"
+for i in $(seq 1 30); do
+    if command -v curl &>/dev/null && curl -s -o /dev/null http://localhost:$SLIDEV_PORT 2>/dev/null; then
+        break
+    fi
+    echo -n "."
+    sleep 1
+done
+echo ""
+
+if command -v curl &>/dev/null && curl -s -o /dev/null http://localhost:$SLIDEV_PORT 2>/dev/null; then
+    echo -e "  ${GREEN}✔${NC} 前端已启动 (http://localhost:$SLIDEV_PORT)"
+else
+    echo -e "  ${YELLOW}⚠${NC} 前端可能仍在编译中，请稍候访问 http://localhost:$SLIDEV_PORT"
 fi
-echo -e "  ${GREEN}✔${NC} 前端已启动 (PID $FRONTEND_PID)"
 
 echo ""
 echo -e "${BOLD}${GREEN}TermiSlide 已就绪${NC}"
@@ -188,5 +203,5 @@ echo -e "  后端: ${CYAN}ws://localhost:$PORT${NC}"
 echo -e "  按 ${YELLOW}Ctrl+C${NC} 停止"
 echo ""
 
-# 等待任一进程退出
-wait -n "$DAEMON_PID" "$FRONTEND_PID" 2>/dev/null || true
+# 等待后端进程（前台阻塞直到 Ctrl+C）
+wait "$DAEMON_PID" 2>/dev/null || true
