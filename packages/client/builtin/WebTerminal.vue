@@ -52,9 +52,13 @@ let fitAddon: FitAddon | null = null
 let ws: WebSocket | null = null
 let resizeObserver: ResizeObserver | null = null
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+let resizeDebounceTimer: ReturnType<typeof setTimeout> | null = null
 let disposed = false
+let lastSentCols = 0
+let lastSentRows = 0
 
 const RECONNECT_DELAY = 3000
+const RESIZE_DEBOUNCE_MS = 150
 
 function sendJSON(data: Record<string, unknown>) {
   if (ws?.readyState === WebSocket.OPEN) {
@@ -127,15 +131,30 @@ function performFit() {
     return
   try {
     fitAddon.fit()
-    sendJSON({
-      type: 'resize',
-      cols: term.cols,
-      rows: term.rows,
-    })
+    // 仅在尺寸实际变化时发送 resize，避免不必要的 SIGWINCH
+    if (term.cols !== lastSentCols || term.rows !== lastSentRows) {
+      sendJSON({
+        type: 'resize',
+        cols: term.cols,
+        rows: term.rows,
+      })
+      lastSentCols = term.cols
+      lastSentRows = term.rows
+    }
   }
   catch {
     // Container may not be visible yet
   }
+}
+
+function debouncedFit() {
+  if (resizeDebounceTimer) {
+    clearTimeout(resizeDebounceTimer)
+  }
+  resizeDebounceTimer = setTimeout(() => {
+    performFit()
+    resizeDebounceTimer = null
+  }, RESIZE_DEBOUNCE_MS)
 }
 
 onMounted(() => {
@@ -203,9 +222,9 @@ onMounted(() => {
   // Auto-focus terminal so user can type immediately
   term.focus()
 
-  // Observe container resize for responsive terminal
+  // Observe container resize for responsive terminal (debounced)
   resizeObserver = new ResizeObserver(() => {
-    requestAnimationFrame(() => performFit())
+    requestAnimationFrame(() => debouncedFit())
   })
   resizeObserver.observe(terminalRef.value)
 
@@ -225,6 +244,11 @@ onUnmounted(() => {
   if (reconnectTimer) {
     clearTimeout(reconnectTimer)
     reconnectTimer = null
+  }
+
+  if (resizeDebounceTimer) {
+    clearTimeout(resizeDebounceTimer)
+    resizeDebounceTimer = null
   }
 
   resizeObserver?.disconnect()

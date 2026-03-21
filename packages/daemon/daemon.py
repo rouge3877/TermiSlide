@@ -121,6 +121,13 @@ class PTYSession:
         当前绑定到此 PTY 的所有 WebSocket 连接。
     read_task : asyncio.Task | None
         异步读取循环的 Task 句柄。
+    resize_owner : Any
+        当前拥有 resize 控制权的 WebSocket 客户端。仅该客户端发送的
+        resize 请求会被执行，避免多客户端共享环境时互相冲突导致光标错位。
+    current_cols : int
+        PTY 当前列数，用于跳过无变化的 resize 以避免不必要的 SIGWINCH。
+    current_rows : int
+        PTY 当前行数。
     """
     env_name: str
     process: PtyProcessUnicode
@@ -128,6 +135,9 @@ class PTYSession:
     buffer_bytes: int = 0
     clients: set = field(default_factory=set)
     read_task: asyncio.Task | None = None
+    resize_owner: Any = None
+    current_cols: int = DEFAULT_COLS
+    current_rows: int = DEFAULT_ROWS
 
     def append_output(self, data: str) -> None:
         """
@@ -447,14 +457,33 @@ async def _handle_attach(ws: Any, msg: dict) -> None:
         # 首次 attach 该环境：衍生新 PTY
         env_cfg = env_configs[env_name]
         session = await spawn_pty(env_cfg, cols=cols, rows=rows)
+        session.current_cols = cols
+        session.current_rows = rows
     else:
         log.info("环境 '%s' PTY 已存在，复用", env_name)
 
-    # 4) 绑定客户端到此 PTY
+    # 4) 此客户端成为 resize 拥有者（最后 attach 的客户端控制尺寸）
+    session.resize_owner = ws
+
+    # 5) 调整终端尺寸 —— 必须在回放缓冲区之前完成，否则 SIGWINCH
+    #    触发的 bash 重绘会与回放内容冲突导致光标位置错乱
+    if "cols" in msg and "rows" in msg:
+        if session.current_cols != cols or session.current_rows != rows:
+            try:
+                session.process.setwinsize(int(rows), int(cols))
+                session.current_cols = cols
+                session.current_rows = rows
+                # 等待 bash 处理 SIGWINCH 并完成重绘
+                await asyncio.sleep(0.05)
+            except Exception as e:
+                log.warning("设置终端尺寸失败: %s", e)
+
+    # 6) 绑定客户端到此 PTY
     session.clients.add(ws)
     ws_env_map[ws] = env_name
 
-    # 5) 回放缓冲区输出（核心：防止前端黑屏）
+    # 7) 回放缓冲区输出（核心：防止前端黑屏）
+    #    此时缓冲区已包含 SIGWINCH 后的正确状态
     buffered = session.get_buffered_output()
     if buffered:
         replay_frame = json.dumps({"type": "output", "data": buffered})
@@ -464,13 +493,6 @@ async def _handle_attach(ws: Any, msg: dict) -> None:
             len(buffered.encode("utf-8", errors="replace")),
             env_name,
         )
-
-    # 6) 调整终端尺寸（如果请求中提供了 cols/rows）
-    if "cols" in msg and "rows" in msg:
-        try:
-            session.process.setwinsize(rows, cols)
-        except Exception as e:
-            log.warning("设置终端尺寸失败: %s", e)
 
     # 确认 attach 成功
     await _safe_send(ws, json.dumps({"type": "attached", "env": env_name}))
@@ -495,6 +517,9 @@ async def _handle_input(ws: Any, msg: dict) -> None:
     if not session:
         await _send_error(ws, f"环境 '{env_name}' 的 PTY 已不存在")
         return
+
+    # 发送输入的客户端成为活跃客户端，获得 resize 控制权
+    session.resize_owner = ws
 
     try:
         session.process.write(data)
@@ -526,8 +551,19 @@ async def _handle_resize(ws: Any, msg: dict) -> None:
         await _send_error(ws, f"环境 '{env_name}' 的 PTY 已不存在")
         return
 
+    # 仅接受来自 resize 拥有者的尺寸变更，防止多客户端共享同一
+    # 环境时互相冲突导致 SIGWINCH 风暴和光标错位
+    if session.resize_owner is not None and session.resize_owner != ws:
+        return
+
+    # 跳过无变化的 resize，避免不必要的 SIGWINCH
+    if session.current_cols == int(cols) and session.current_rows == int(rows):
+        return
+
     try:
         session.process.setwinsize(int(rows), int(cols))
+        session.current_cols = int(cols)
+        session.current_rows = int(rows)
         log.info("已调整终端尺寸: env=%s, %dx%d", env_name, cols, rows)
     except Exception as e:
         log.error("调整终端尺寸失败 (env=%s): %s", env_name, e)
@@ -547,6 +583,9 @@ def _detach_ws(ws: Any) -> None:
         session = pty_sessions.get(env_name)
         if session:
             session.clients.discard(ws)
+            # 如果断开的是 resize 拥有者，释放控制权给下一个活跃客户端
+            if session.resize_owner == ws:
+                session.resize_owner = None
             log.info(
                 "客户端已从环境 '%s' 解绑 (剩余客户端: %d)",
                 env_name,
