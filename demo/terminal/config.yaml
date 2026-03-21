@@ -1,0 +1,10 @@
+# TermiSlide Demo - Backend Configuration
+# Each environment maps to a working directory with an optional .lab.env init script.
+# The daemon spawns a persistent PTY per environment on first attach.
+
+environments:
+  - name: "linux-basics"
+    path: "./labs/linux-basics"
+
+  - name: "git-practice"
+    path: "./labs/git-practice"

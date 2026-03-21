@@ -1,15 +1,26 @@
 <!--
   WebTerminal - Interactive terminal component powered by xterm.js
 
-  Connects to a Python Terminal Daemon via WebSocket for live shell access.
-  Each slide can specify its own terminal environment via the `envName` prop.
+  Connects to the TermiSlide Backend Daemon via WebSocket for live PTY access.
+  Each slide can specify its own terminal environment via the `envName` prop,
+  corresponding to an entry in the backend's config.yaml.
+
+  Protocol (JSON frames over WebSocket):
+    Client → Server:
+      { type: "attach", env: string, cols: number, rows: number }
+      { type: "input", data: string }
+      { type: "resize", cols: number, rows: number }
+    Server → Client:
+      { type: "output", data: string }      — PTY output (including buffer replay)
+      { type: "attached", env: string }      — attach confirmation
+      { type: "error", message: string }     — error notification
 
   Usage in Slidev markdown (with terminal-split layout):
 
   ```md
   ---
   layout: terminal-split
-  env: python-dev
+  env: my-env
   ---
 
   # My Terminal Slide
@@ -52,7 +63,10 @@ function sendJSON(data: Record<string, unknown>) {
 function attachEnv(envName: string) {
   if (!term)
     return
-  term.clear()
+  // Clear screen and reset cursor before switching environment.
+  // The backend will replay its output buffer for the new env,
+  // restoring the terminal to its previous state.
+  term.reset()
   sendJSON({
     type: 'attach',
     env: envName,
@@ -74,8 +88,18 @@ function connectWebSocket() {
   ws.onmessage = (event) => {
     try {
       const msg = JSON.parse(event.data)
-      if (msg.type === 'output' && msg.data) {
-        term?.write(msg.data)
+      switch (msg.type) {
+        case 'output':
+          if (msg.data)
+            term?.write(msg.data)
+          break
+        case 'attached':
+          // Attach confirmed by backend; env is now active
+          break
+        case 'error':
+          // Display backend errors inline so the user sees them
+          term?.writeln(`\r\n\x1B[1;31m[Error] ${msg.message}\x1B[0m`)
+          break
       }
     }
     catch {
@@ -86,6 +110,7 @@ function connectWebSocket() {
 
   ws.onclose = () => {
     if (!disposed) {
+      term?.writeln('\r\n\x1B[1;33m[Disconnected] Reconnecting...\x1B[0m')
       reconnectTimer = setTimeout(connectWebSocket, RECONNECT_DELAY)
     }
   }
@@ -150,12 +175,12 @@ onMounted(() => {
   // Initial fit after DOM is ready
   requestAnimationFrame(() => performFit())
 
-  // Forward user input to backend
+  // Forward user input to backend PTY
   term.onData((data) => {
     sendJSON({ type: 'input', data })
   })
 
-  // Observe container resize
+  // Observe container resize for responsive terminal
   resizeObserver = new ResizeObserver(() => {
     requestAnimationFrame(() => performFit())
   })
@@ -164,7 +189,7 @@ onMounted(() => {
   connectWebSocket()
 })
 
-// Re-attach when envName changes (slide navigation)
+// Re-attach when envName changes (slide navigation triggers this)
 watch(() => props.envName, (newEnv) => {
   attachEnv(newEnv)
 })
