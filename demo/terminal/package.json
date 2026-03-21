@@ -1,0 +1,8 @@
+{
+  "name": "@slidev/demo-terminal",
+  "private": true,
+  "scripts": {
+    "dev": "slidev --open",
+    "build": "slidev build"
+  }
+}

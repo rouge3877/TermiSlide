@@ -64,6 +64,8 @@
     "unocss": "catalog:prod",
     "vue": "catalog:frontend",
     "vue-router": "catalog:frontend",
+    "xterm": "catalog:",
+    "xterm-addon-fit": "catalog:",
     "yaml": "catalog:prod"
   },
   "devDependencies": {
