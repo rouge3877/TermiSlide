@@ -146,6 +146,14 @@ fi
 # --------------------------------------------------------------------------
 PORT="${TERMISLIDE_PORT:-8765}"
 
+# 检查端口是否被占用，若是则终止旧进程
+OLD_PID=$(lsof -t -i:"$PORT" 2>/dev/null | head -1 || true)
+if [ -n "$OLD_PID" ]; then
+    echo -e "${YELLOW}⚠${NC} 端口 $PORT 被 PID $OLD_PID 占用，正在终止..."
+    kill "$OLD_PID" 2>/dev/null || true
+    sleep 1
+fi
+
 echo -e "${CYAN}→${NC} 启动后端 daemon (port $PORT)..."
 python3 "$DAEMON" "$CONFIG" &
 DAEMON_PID=$!
@@ -173,6 +181,13 @@ if [ ! -f "$SLIDES_DIR/slides.md" ]; then
 fi
 
 echo -e "${CYAN}→${NC} 启动前端 (slidev)..."
+SLIDEV_PORT=3030
+OLD_FRONT=$(lsof -t -i:"$SLIDEV_PORT" 2>/dev/null | head -1 || true)
+if [ -n "$OLD_FRONT" ]; then
+    echo -e "${YELLOW}⚠${NC} 端口 $SLIDEV_PORT 被 PID $OLD_FRONT 占用，正在终止..."
+    kill "$OLD_FRONT" 2>/dev/null || true
+    sleep 1
+fi
 cd "$SLIDES_DIR"
 npx slidev slides.md --open --log=info &
 FRONTEND_PID=$!
