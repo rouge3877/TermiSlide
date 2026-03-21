@@ -40,16 +40,15 @@ npx slidev slides.md --open
 
 ### 3. 使用
 
-打开浏览器访问 `http://localhost:3030`，按 → 翻页：
+打开浏览器访问 `http://localhost:3030`，按 → 翻页。
 
-| 幻灯片 | 环境 | 内容 |
-|--------|------|------|
-| 1 | — | 标题页 |
-| 2 | `linux-basics` | 文件查看、grep、管道 |
-| 3 | `linux-basics` | 文件操作（状态保持） |
-| 4 | `git-practice` | Git 初始化与提交 |
-| 5 | `linux-basics` | 回到 Lab 1（缓冲回放） |
-| 6 | — | 架构总览 |
+Shell Tutorial 环境一览：
+
+| 环境 | 用途 | 练习文件 |
+|------|------|----------|
+| `shell-basics` | Shell 基础命令 (cd, cat, cp, mv...) | sample.txt |
+| `shell-tools` | 工具实战 (tar, grep, find, pipe...) | fruits.txt, project/ |
+| `shell-scripts` | Shell 脚本编程 (变量, 控制结构, 函数...) | mcd.sh |
 
 ## 项目结构
 
@@ -58,13 +57,19 @@ demo/terminal/
 ├── slides.md          # Slidev 幻灯片 Markdown
 ├── config.yaml        # 后端环境配置
 ├── package.json       # 前端依赖
+├── assets/            # 幻灯片图片资源
 ├── README.md          # 本文件
 └── labs/
-    ├── linux-basics/  # Lab 1 工作目录
+    ├── shell-basics/  # Shell 基础实验
     │   ├── .lab.env   # 环境初始化脚本
     │   └── sample.txt # 练习用文件
-    └── git-practice/  # Lab 2 工作目录
-        └── .lab.env   # 环境初始化脚本
+    ├── shell-tools/   # 工具实战
+    │   ├── .lab.env
+    │   ├── fruits.txt
+    │   └── project/   # find/grep 练习用目录树
+    └── shell-scripts/ # 脚本编程
+        ├── .lab.env
+        └── mcd.sh     # 示例函数脚本
 ```
 
 ## 自定义

@@ -1,174 +1,649 @@
 ---
 theme: default
-title: TermiSlide 交互式终端教学演示
+title: Shell Tutorial
+transition: slide-left
 ---
 
-# TermiSlide
+# `Shell` Tutorial
 
-用 Slidev 幻灯片驱动的交互式终端教学平台
+<div class="mt-4 text-lg text-gray-400">
 
-<div class="mt-8 text-gray-400">
-
-- 📝 左侧 Markdown 讲义，右侧实时终端
-- 🔄 每张幻灯片可绑定独立的终端环境
-- 💾 切换幻灯片后终端状态自动保留
+- 2025-03
+- [ICS@XJTU](https://xjtu-ics.github.io/)
+- Yunguang Li, Tang Tang, Yuxuan Li
 
 </div>
 
-<div class="abs-br m-8 text-sm text-gray-500">
-  按 → 开始
+<div class="mt-8 text-sm text-gray-500 italic">
+
+**A brief tutorial for beginners**, so feel free to absent if you are familiar with shell 🙉🙈
+
+</div>
+
+---
+
+# Interactive with Computer System
+
+As we all know, there are many ways to interact with a computer system: GUI, CLI, AR, VR, etc.
+
+<div class="flex justify-center my-4">
+  <img src="./assets/GUICLI.png" alt="GUI vs CLI" class="w-full max-w-xl" />
+</div>
+
+As a human being, we are more familiar with GUI, but CLI is also very powerful and efficient.
+
+---
+
+# Why should I use CLI?
+
+1. Sometimes, **GUI is not available** (e.g. server, embedded system). And many powerful tools are CLI only (e.g. `git`, `ssh`, `vim`)
+2. CLI is more **efficient** (e.g. `mv` v.s. drag and drop)
+3. CLI is more **flexible** and **programmable** (e.g. `>`, `|`, `&&`)
+4. <u>***ICS*** hopes you to use CLI 😂</u>
+
+<div class="mt-8" />
+
+### Overview
+
+1. **Brief Intro**: all you need to know about starting using shell.
+2. **Recommend**: basic but useful command line tools.
+3. **Automation**: write a bash scripts.
+
+> ***RTFM**: use `man` and `tldr`.*
+
+---
+layout: section
+---
+
+## 1. Basic Setup
+
+---
+
+# Basic Setup
+
+1. Terminal (emulator): emulate a (text-based) terminal inside the GUI environment.
+   - Linux: `kitty`, `gnome-terminal`, `konsole`, `xterm`, `terminator`, etc.
+   - Windows: `Windows Terminal`
+   - *Open `vscode` and <kbd>Ctrl + ~</kbd>*
+
+<v-click>
+
+2. `SSH` to server:
+
+```bash
+ssh <your stuid>-ics@igw.dfshan.net -p2291
+```
+
+</v-click>
+
+<v-click>
+
+3. ***Try the tty: <kbd>Ctrl + Alt + F1</kbd> (F1-F6, in some Linux distros)***
+
+> **[The TTY demystified](https://www.linusakesson.net/programming/tty/)**
+
+</v-click>
+
+---
+layout: section
+---
+
+## 2. Shell: The "Shell" of the Kernel
+
+---
+layout: terminal-split
+env: shell-basics
+---
+
+# Shell Basics
+
+We focus on [`bash shell`](https://www.gnu.org/software/bash/)
+
+```bash
+echo $0     # Check which shell you are using
+```
+
+```bash
+command-name arg1 arg2 arg3 ...   # Basic format
+```
+
+<div class="text-sm mt-2">
+
+| DO - | In GUI | In CLI |
+|------|--------|--------|
+| Create a file | Right click, New file | `touch filename` |
+| Move a file | Drag and drop | `mv f1 f2` |
+| Launch an app | Click icon | `./app` |
+| Quit an app | Click close | <kbd>Ctrl+C</kbd> |
+| Suspend an app | Minimize | <kbd>Ctrl+Z</kbd> |
+| Background jobs | Task Manager | `jobs` |
+| Foreground | Alt+Tab | `fg %n` |
+
 </div>
 
 ---
 layout: terminal-split
-env: linux-basics
+env: shell-basics
 ---
 
-# Lab 1: Linux 基础
+# Basic Tools (Commands)
 
-右侧是一个真实的 Bash 终端，试试这些命令：
+Try them out in the terminal →
+
+**Directories:** `pwd`, `cd`, `mkdir`
 
 ```bash
-ls -la
+pwd
+cd /tmp && pwd
+cd - && pwd
+mkdir -p test/sub
+```
+
+**Files:** `touch`, `cp`, `mv`, `rm`, `cat`, `less`
+
+```bash
 cat sample.txt
+cp sample.txt copy.txt
+less copy.txt        # press q to quit
+```
+
+**Others:** `sort`, `wc`, `echo`, `grep`, `chmod`
+
+```bash
 wc -l sample.txt
+sort sample.txt
+```
+
+---
+layout: terminal-split
+env: shell-tools
+---
+
+# `Tar`
+
+Usage Scenario: archive files in 1 bundle
+
+- `-c`: create a tarball
+- `-x`: open a tarball
+- `-v`: verbose mode
+- `-t`: list files in a tarball
+- `-f`: specify file name — **always the last option**
+
+```bash
+tar -cf archive.tar project/
+tar -tf archive.tar
+tar -xf archive.tar -C /tmp/
+ls /tmp/project/
+```
+
+```bash
+# compress multiple items
+tar -cvf bundle.tar fruits.txt project/
+```
+
+---
+
+# `Tmux`
+
+Usage Scenario: manage multiple terminal sessions
+
+<div class="flex justify-center my-4">
+  <img src="./assets/tmux.png" alt="tmux" class="w-1/2" />
+</div>
+
+- prefix key: <kbd>Ctrl + b</kbd>
+- Client-Server model: `tmux` (server) + `tmux attach` (client)
+
+---
+layout: terminal-split
+env: shell-tools
+---
+
+# `grep`
+
+Usage Scenario: search for a specific string in a file
+
+`grep` + regex
+
+- `-i`: case insensitive
+- `-r`: recursive search
+- `-n`: show line number
+- `-v`: invert match
+
+```bash
+grep "apple" fruits.txt
+grep -n "an" fruits.txt
+grep -i "HELLO" project/hello.txt
+grep -r "hello" project/
+grep -v "a" fruits.txt
+```
+
+---
+layout: terminal-split
+env: shell-tools
+---
+
+# Interlude: SO MANY COMMANDS 😭
+
+How to learn them all?
+
+- `-h`, `--help`
+- **`man`**: the system's manual pager (<u>Ask the man XD</u>)
+
+```bash
+man ls
+man -k ipc
+man man
+```
+
+- **`tldr`**: https://github.com/tldr-pages/tldr
+  - Simpler help pages focused on practical examples
+  - `man tar` v.s. `tldr tar`
+
+```bash
+# Compare:
+tar --help | head -20
+```
+
+> Some commands like `cd` are shell builtins — try `help cd`
+
+---
+layout: terminal-split
+env: shell-tools
+---
+
+# `Find`
+
+Usage Scenario: search files in a directory
+
+- `-name`: search by name
+- `-type`: search by type (`f` = file, `d` = dir)
+- `-exec`: execute command on each file found
+
+```bash
+find . -type f -name "*.txt"
+find . -type f -name "*.c"
+find project/ -type d
 ```
 
 <v-click>
 
-### 文本搜索
-
-使用 `grep` 查找内容：
-
 ```bash
-grep "lucky" sample.txt
-grep -n "Line" sample.txt
+# exec: cat all .txt files
+find . -type f -name "*.txt" -exec cat {} \;
 ```
 
 </v-click>
 
-<v-click>
+---
 
-### 管道操作
+# More Tools
+
+<div class="grid grid-cols-2 gap-4">
+<div>
+
+**Text Processing**
+- `awk` — pattern scanning & processing
+- `sed` — stream editor for filtering & transforming text
+
+**Search**
+- `ag` — code-searching tool (like `grep`)
+- `tree` — list directories in tree format
+
+</div>
+<div>
+
+**Monitoring**
+- `htop` — interactive process viewer
+
+**Network**
+- `curl` — transfer data from/to server
+- `ping`, `ssh`, `scp`
+
+**Fun**
+- `cmatrix` — Matrix rain effect
+- `sl` — steam locomotive 🚂
+
+</div>
+</div>
+
+---
+
+# Install Software in CLI
+
+**1. Package manager:** `apt` (Ubuntu/Debian), `brew` (macOS), `dnf` (Fedora), `pacman` (Arch)
 
 ```bash
-cat sample.txt | head -5
-cat sample.txt | tail -3
+apt search cmatrix
+# https://command-not-found.com/
+```
+
+<v-click>
+
+**2. [Build from source](https://github.com/abishekvashok/cmatrix)**
+
+- Read README / INSTALL doc
+- `configure` → `make` → `make install`
+
+```bash
+git clone https://github.com/abishekvashok/cmatrix.git
+cd cmatrix
+mkdir build && cd build
+cmake ..
+make
+```
+
+</v-click>
+
+---
+
+# Communication: Pipe
+
+A lot of CLI tools — communication is required to do complex jobs.
+
+**Pipe `|`** : use the `stdout` of previous command as the `stdin` of the next.
+
+<div class="flex justify-center my-4">
+  <img src="./assets/pipe.png" alt="pipe" class="w-2/3" />
+</div>
+
+---
+
+# Communication: Redirect 1
+
+**Redirect `>` & `<`** : `stdout` to file, or file to `stdin`.
+
+<div class="flex justify-center my-4">
+  <img src="./assets/redirect.png" alt="redirect" class="w-2/3" />
+</div>
+
+---
+
+# Communication: Redirect 2
+
+File descriptors:
+- **0** — `stdin`, the standard input stream.
+- **1** — `stdout`, the standard output stream.
+- **2** — `stderr`, the standard error stream.
+
+<div class="flex justify-center my-4">
+  <img src="./assets/redirect-test.png" alt="redirect test" class="w-2/3" />
+</div>
+
+---
+layout: terminal-split
+env: shell-tools
+---
+
+# Combining Commands
+
+Try these examples:
+
+```bash
+# 1. Count files in project/
+find project/ -type f | wc -l
+
+# 2. Fetch all #include lines
+grep -r "#include" project/
+
+# 3. Diff between two dirs
+diff <(ls project/src) <(ls project/tests)
+```
+
+<v-click>
+
+```bash
+# 4. Disk usage in /usr/bin (top 5)
+du -sh /usr/bin/* 2>/dev/null | sort -rh | head -5
+```
+
+</v-click>
+
+<div class="mt-4 text-sm">
+
+- `xargs` — build commands from stdin
+- `<()` — process substitution (temp file)
+- `$()` — command substitution
+
+> Build temporary tool combinations — **a "natural programming language"**
+
+</div>
+
+---
+layout: section
+---
+
+## 3. Shell Scripts
+
+Shell is also a programming language, which allows you to combine a series of commands and execute.
+
+---
+layout: terminal-split
+env: shell-scripts
+---
+
+# Variables
+
+In `bash`, assign with `foo=bar`, access with `$foo`.
+
+```bash
+foo=bar
+echo $foo
+```
+
+<v-click>
+
+⚠️ **Notes:**
+
+1. `foo = bar` (with spaces) will NOT work — bash interprets `foo` as a command with `=` and `bar` as arguments.
+2. **In shell scripts, spaces separate arguments.**
+
+```bash
+foo = bar    # This is WRONG!
 ```
 
 </v-click>
 
 ---
 layout: terminal-split
-env: linux-basics
+env: shell-scripts
 ---
 
-# Lab 1 续: 文件操作
+# Strings
 
-还是同一个 **linux-basics** 环境 ——
-你之前的命令历史和文件修改都还在！
+Strings can be defined using `'` and `"`, but they have different meanings:
 
-试试创建和操作文件：
+- **`'...'`** — literal strings, variables are **NOT** replaced.
+- **`"..."`** — variables are replaced with their values.
 
 ```bash
-echo "Hello TermiSlide" > myfile.txt
-cat myfile.txt
-cp myfile.txt myfile_backup.txt
-ls -la *.txt
+foo=bar
+echo "$foo"
+echo '$foo'
 ```
 
 <v-click>
 
-### 进程查看
+Read more: [Bash Manual — Quoting](https://www.gnu.org/software/bash/manual/html_node/Quoting.html)
+
+</v-click>
+
+---
+layout: terminal-split
+env: shell-scripts
+---
+
+# Control Structures
 
 ```bash
-ps aux | head -10
-whoami
+# if-elif-else
+if [ -f sample.txt ]; then
+    echo "File exists"
+else
+    echo "Not found"
+fi
+```
+
+```bash
+# for loop
+for i in 1 2 3 4 5; do
+    echo "Number: $i"
+done
+```
+
+```bash
+# while loop
+count=0
+while [ $count -lt 3 ]; do
+    echo "count=$count"
+    count=$((count + 1))
+done
+```
+
+---
+layout: terminal-split
+env: shell-scripts
+---
+
+# `test`
+
+```bash
+test expression
+[ expression ]
+[[ expression ]]
+```
+
+- `[ -e file ]` — if file exists, then true
+- `[ string ]` — if string is not empty, then true
+- `[ str1 != str2 ]` — if strings differ, then true
+- `[ int1 -eq int2 ]` — if integers equal, then true
+
+> ⚠️ **Do NOT confuse numeric and string comparison**
+
+```bash
+[ 1 -eq 1 ] && echo "equal"
+[ "abc" != "def" ] && echo "different"
+[ -e /etc/passwd ] && echo "exists"
+```
+
+---
+layout: terminal-split
+env: shell-scripts
+---
+
+# Functions
+
+```bash
+mcd () {
+    mkdir -p "$1"
+    cd "$1"
+}
+```
+
+Try it:
+
+```bash
+source mcd.sh
+mcd my_new_dir
 pwd
 ```
 
-</v-click>
-
----
-layout: terminal-split
-env: git-practice
----
-
-# Lab 2: Git 练习
-
-终端已自动切换到 **git-practice** 环境。
-
-初始化一个 Git 仓库：
-
-```bash
-git init my-project
-cd my-project
-```
-
 <v-click>
 
-### 创建第一个提交
-
-```bash
-echo "# My Project" > README.md
-git add README.md
-git commit -m "Initial commit"
-git log --oneline
-```
+> `$1` is the first argument passed to the function.
 
 </v-click>
 
 ---
 layout: terminal-split
-env: linux-basics
+env: shell-scripts
 ---
 
-# 回到 Lab 1
+# Special Variables
 
-切回 **linux-basics** 环境 — 注意终端自动恢复了之前的状态！
+`bash` uses many special variables:
 
-之前创建的文件应该还在：
+<div class="text-sm">
 
-```bash
-ls *.txt
-cat myfile.txt
-```
-
-<div class="mt-8 p-4 bg-blue-500/10 rounded">
-
-💡 **核心特性**: 后端为每个环境维护独立的 PTY 进程和输出缓冲区。
-切换环境时，终端画面通过缓冲回放自动恢复，实现无缝的上下文切换。
+| Variable | Meaning |
+|----------|---------|
+| `$0` | Script name |
+| `$1`~`$9` | Script parameters |
+| `$@` | All parameters |
+| `$#` | Number of parameters |
+| `$?` | Return value of previous command |
+| `$$` | Process ID of current script |
+| `!!` | Last command (try `sudo !!`) |
+| `$_` | Last parameter of last command |
 
 </div>
 
+```bash
+echo "Shell: $0, PID: $$"
+ls /nonexistent 2>/dev/null; echo "Exit: $?"
+```
+
+---
+layout: terminal-split
+env: shell-scripts
 ---
 
-# 架构总览
+# Shebang
 
-```
-┌─────────────────────┐           ┌──────────────────────────┐
-│  Slidev Frontend    │ WebSocket │  TermiSlide Backend      │
-│                     │◄─────────►│  (Python asyncio daemon) │
-│  ┌───────┬────────┐ │   JSON    │                          │
-│  │ Slide │ xterm  │ │  frames   │  ┌─ PTY: linux-basics    │
-│  │ .md   │ .js    │ │           │  │  └─ /bin/bash (PID x) │
-│  └───────┴────────┘ │           │  │     output buffer 📋  │
-│                     │           │  │                        │
-│  env: linux-basics ─┼─ attach ─►│  ├─ PTY: git-practice    │
-│  键盘输入 ──────────┼─ input ──►│  │  └─ /bin/bash (PID y) │
-│  窗口变化 ──────────┼─ resize ─►│  │     output buffer 📋  │
-│  终端输出 ◄─────────┼─ output ──│  │                        │
-│  错误提示 ◄─────────┼─ error ───│  └─ ...                  │
-└─────────────────────┘           └──────────────────────────┘
+`#!` tells the system which interpreter to use.
+
+```bash
+#!/bin/bash
+echo "Hello, World!"
 ```
 
-**协议帧**:
-| 方向 | type | 用途 |
-|------|------|------|
-| → | `attach` | 绑定/切换到指定环境 |
-| → | `input` | 转发键盘输入到 PTY |
-| → | `resize` | 同步终端尺寸 |
-| ← | `output` | PTY 输出（含缓冲回放）|
-| ← | `attached` | 环境绑定确认 |
-| ← | `error` | 错误信息 |
+```bash
+#!/usr/bin/env python3
+# use env to find python3 in PATH
+print("Hello, World!")
+```
+
+Try it:
+
+```bash
+echo '#!/bin/bash
+echo "Hello from script!"
+echo "PID: $$"' > hello.sh
+
+chmod +x hello.sh
+./hello.sh
+```
+
+---
+
+# `builtin`
+
+Shell builtins are commands built into the shell itself, not external programs.
+
+- **`source`** (or **`.`**) — run commands in the **current** shell
+- **`cd`** — change directory
+- **`echo`**, **`export`**, **`alias`**, **`history`** ...
+
+```bash
+help cd
+man bash-builtins
+```
+
+> Builtins have no separate man page — use `help <command>` or `man bash-builtins`.
+
+---
+layout: end
+---
+
+## $. The Best Way to Learn it, is to Use it.
+
+*"Unix is user-friendly; it's just choosy about who its friends are."*
+
+<div class="mt-8 text-left text-sm">
+
+- MIT — [The Missing Semester](https://missing-semester-cn.github.io/)
+- USTC — [Linux101](https://101.ustclug.org/)
+- [The Art of Command Line](https://github.com/jlevy/the-art-of-command-line)
+
+</div>
 
