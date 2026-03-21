@@ -33,6 +33,7 @@
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { Terminal } from 'xterm'
 import { FitAddon } from 'xterm-addon-fit'
+import { useNav } from '../composables/useNav'
 import 'xterm/css/xterm.css'
 
 const props = withDefaults(defineProps<{
@@ -44,6 +45,7 @@ const props = withDefaults(defineProps<{
 })
 
 const terminalRef = ref<HTMLDivElement>()
+const { nextSlide, prevSlide } = useNav()
 
 let term: Terminal | null = null
 let fitAddon: FitAddon | null = null
@@ -180,11 +182,21 @@ onMounted(() => {
     sendJSON({ type: 'input', data })
   })
 
-  // Let Shift+Arrow keys bubble up to Slidev for slide navigation.
-  // Return false = xterm ignores the key, letting the browser dispatch it normally.
+  // Intercept Shift+Arrow to navigate slides even when terminal is focused.
+  // xterm captures all keyboard events in its textarea, so simply returning
+  // false (to skip xterm processing) is not enough — the event never reaches
+  // Slidev's shortcut system. We must actively call navigation here.
   term.attachCustomKeyEventHandler((event) => {
-    if (event.shiftKey && (event.key === 'ArrowLeft' || event.key === 'ArrowRight'))
-      return false
+    if (event.type === 'keydown' && event.shiftKey) {
+      if (event.key === 'ArrowRight') {
+        nextSlide()
+        return false
+      }
+      if (event.key === 'ArrowLeft') {
+        prevSlide()
+        return false
+      }
+    }
     return true
   })
 
