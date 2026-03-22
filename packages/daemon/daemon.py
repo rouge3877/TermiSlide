@@ -383,6 +383,37 @@ async def _pty_read_loop(session: PTYSession) -> None:
         loop.remove_reader(fd)
         log.info("环境 '%s' 读取循环已退出", session.env_name)
 
+        # PTY 进程已退出（例如用户按了 Ctrl+D）。
+        # 从全局会话表中移除死会话，然后自动重新衍生一个新的 PTY，
+        # 并将所有仍然连接的客户端重新绑定到新会话，使终端无缝恢复。
+        env_name = session.env_name
+        clients_snapshot = set(session.clients)
+        pty_sessions.pop(env_name, None)
+
+        if clients_snapshot and env_name in env_configs:
+            log.info("环境 '%s' PTY 已退出，正在自动重生...", env_name)
+            env_cfg = env_configs[env_name]
+            try:
+                new_session = await spawn_pty(
+                    env_cfg,
+                    cols=session.current_cols,
+                    rows=session.current_rows,
+                )
+                new_session.current_cols = session.current_cols
+                new_session.current_rows = session.current_rows
+
+                # 将所有客户端迁移到新会话
+                for ws in clients_snapshot:
+                    if ws in ws_env_map:
+                        new_session.clients.add(ws)
+                        new_session.resize_owner = ws
+                log.info(
+                    "环境 '%s' PTY 已重生 (PID=%d)，已迁移 %d 个客户端",
+                    env_name, new_session.process.pid, len(clients_snapshot),
+                )
+            except Exception as e:
+                log.error("环境 '%s' PTY 重生失败: %s", env_name, e)
+
 
 async def _safe_send(ws: Any, data: str) -> None:
     """安全发送：捕获连接关闭异常，避免影响其他客户端的广播。"""
@@ -477,6 +508,11 @@ async def _handle_attach(ws: Any, msg: dict) -> None:
     rows = msg.get("rows", DEFAULT_ROWS)
 
     session = pty_sessions.get(env_name)
+    if session is not None and not session.process.isalive():
+        # PTY 已死（可能在重生竞态中残留），清理后重建
+        log.info("环境 '%s' PTY 已失效，将重新创建", env_name)
+        pty_sessions.pop(env_name, None)
+        session = None
     if session is None:
         # 首次 attach 该环境：衍生新 PTY
         env_cfg = env_configs[env_name]
