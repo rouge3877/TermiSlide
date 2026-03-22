@@ -25,9 +25,12 @@ int multiply(int x, int y) {
 int main(void) {
     int a = 3, b = 4;
 
-    printf("add(%d, %d) = %d\n", a, b, add(a, b));
+    int d = add(a, b);
+
+    printf("add(%d, %d) = %d\n", a, b, d);
 
     int m = multiply(a, b);
+    
     printf("multiply(%d, %d) = %d\n", a, b, m);
 
     return 0;

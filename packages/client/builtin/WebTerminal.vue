@@ -204,8 +204,14 @@ onMounted(() => {
   // Initial fit after DOM is ready
   requestAnimationFrame(() => performFit())
 
-  // Forward user input to backend PTY
+  // Forward user input to backend PTY, filtering out terminal query
+  // responses (e.g. OSC replies like "rgb:cdcd/d6d6/f4f4") that xterm.js
+  // generates when bash/readline queries foreground/background colors.
+  // eslint-disable-next-line no-control-regex
+  const oscResponseRe = /^\x1B\][^\x07\x1B]*(?:\x07|\x1B\\)/
   term.onData((data) => {
+    if (oscResponseRe.test(data))
+      return
     sendJSON({ type: 'input', data })
   })
 
