@@ -7,3 +7,6 @@ environments:
 
   - name: "shell-scripts"
     path: "../../labs/shell-scripts"
+
+  - name: "gdb-basics"
+    path: "../../labs/gdb-basics"

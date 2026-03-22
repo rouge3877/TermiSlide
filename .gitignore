@@ -30,3 +30,6 @@ slides-export.md
 .claude
 .venv
 __pycache__
+labs/**/.bash_history
+labs/**/.viminfo
+labs/**/.tmux.conf

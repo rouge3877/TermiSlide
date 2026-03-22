@@ -8,9 +8,9 @@ transition: slide-left
 
 <div class="mt-4 text-lg text-gray-400">
 
-- 2025-03
+- 2026-03-22
 - [ICS@XJTU](https://xjtu-ics.github.io/)
-- Yunguang Li, Tang Tang, Yuxuan Li
+- Tang Tang, Yuxuan Li
 
 </div>
 
@@ -48,6 +48,7 @@ As a human being, we are more familiar with GUI, but CLI is also very powerful a
 1. **Brief Intro**: all you need to know about starting using shell.
 2. **Recommend**: basic but useful command line tools.
 3. **Automation**: write a bash scripts.
+4. **GDB**: debug like a pro.
 
 > ***RTFM**: use `man` and `tldr`.*
 
@@ -630,6 +631,302 @@ man bash-builtins
 ```
 
 > Builtins have no separate man page — use `help <command>` or `man bash-builtins`.
+
+---
+layout: section
+---
+
+## 4. GDB: The Core Workflow
+
+**GDB (GNU Debugger)** uses the `ptrace` system call to control process execution, allowing you to inspect memory, registers, and execution flow.
+
+---
+layout: terminal-split
+env: gdb-basics
+---
+
+# Prerequisite: Debug Symbols
+
+GDB operates on machine code. To map instructions back to source code, the compiler must embed **DWARF** metadata (variable names, types, line numbers).
+
+**You must compile with `-g`:**
+
+```bash
+# Check the source
+cat lifecycle.c
+```
+
+```bash
+# Compile WITH debug symbols
+gcc -g lifecycle.c -o lifecycle
+```
+
+<v-click>
+
+```bash
+# Without -g, GDB cannot show source
+gcc lifecycle.c -o lifecycle_nodebug
+gdb ./lifecycle_nodebug -batch -ex "b main" -ex "r" -ex "list"
+```
+
+</v-click>
+
+---
+layout: terminal-split
+env: gdb-basics
+---
+
+# Start, Break, Run, Step
+
+`gdb ./main` loads the executable — **it does not start the program yet**.
+
+```bash
+gdb ./lifecycle
+```
+
+Inside GDB, try this workflow:
+
+```
+(gdb) break main          # Set breakpoint
+(gdb) run                 # Start execution
+(gdb) next                # Step over (skip into functions)
+(gdb) step                # Step into function call
+(gdb) print a             # Inspect variable
+(gdb) info locals         # All local variables
+(gdb) continue            # Run until next breakpoint
+(gdb) quit
+```
+
+<div class="text-sm mt-2">
+
+- **Breakpoint**: GDB replaces the instruction at that address with a `trap` (`int 3` on x86). When the CPU hits it, control returns to GDB.
+- **`step` vs `next`**: `step` enters function calls; `next` executes them as one unit.
+
+</div>
+
+---
+layout: terminal-split
+env: gdb-basics
+---
+
+# Backtrace: Understanding Crashes
+
+When a program crashes (e.g., Segfault), `backtrace` shows the call chain that led to the crash.
+
+```bash
+gdb ./segfault
+```
+
+```
+(gdb) run
+# Program receives SIGSEGV...
+(gdb) backtrace
+(gdb) frame 1
+(gdb) info locals
+(gdb) print buffer
+```
+
+<v-click>
+
+<div class="text-sm mt-2">
+
+**Reading the backtrace:**
+
+- `#0` — where the crash happened (`strcpy`)
+- `#1` — who called it (`copy_data`)
+- `#2` — who called *that* (`process` — `buffer` is `NULL` here!)
+- `#3` — `main`
+
+Use `frame N` to switch context and inspect local variables at each level.
+
+</div>
+
+</v-click>
+
+---
+layout: section
+---
+
+## 5. GDB: The "Fancy" Operations
+
+Once you have the basics, GDB provides tools that `printf` debugging simply cannot match.
+
+---
+layout: terminal-split
+env: gdb-basics
+---
+
+# TUI: Visual Debugging
+
+GDB has a built-in terminal UI — no IDE needed.
+
+```bash
+gdb ./lifecycle
+```
+
+```
+(gdb) break multiply
+(gdb) run
+(gdb) layout src
+(gdb) next
+(gdb) next
+(gdb) step
+```
+
+<div class="text-sm mt-2">
+
+| Command | Effect |
+|---------|--------|
+| `layout src` | Source code + current line |
+| `layout asm` | Assembly view |
+| `layout split` | Source + assembly |
+| <kbd>Ctrl+X</kbd> <kbd>A</kbd> | Toggle TUI on/off |
+| <kbd>Ctrl+L</kbd> | Redraw (if garbled) |
+
+</div>
+
+---
+layout: terminal-split
+env: gdb-basics
+---
+
+# Hardware Watchpoints
+
+*"Something is modifying my variable, but I don't know where."*
+
+A watchpoint uses the CPU's **hardware debug registers** to halt execution at the exact instruction that modifies a variable.
+
+```bash
+gdb ./watchme
+```
+
+```
+(gdb) break main
+(gdb) run
+(gdb) watch counter
+(gdb) continue
+# GDB stops at each modification of counter.
+# Keep pressing continue — notice when counter
+# suddenly becomes -1. Check the backtrace!
+(gdb) backtrace
+```
+
+<div class="text-sm mt-2">
+
+- `watch var` — pause when `var` is **written**
+- `rwatch var` — pause when `var` is **read**
+- `awatch var` — pause on **any** access
+
+</div>
+
+---
+layout: terminal-split
+env: gdb-basics
+---
+
+# Conditional Breakpoints
+
+*A loop runs 100 times. The bug is at iteration 42.*
+
+Attach a condition to a breakpoint — GDB evaluates it on each hit, but only pauses when `true`.
+
+```bash
+gdb ./conditional
+```
+
+```
+(gdb) break fill_array
+(gdb) run
+(gdb) break 19 if i == 42
+(gdb) continue
+(gdb) print i
+(gdb) print arr[i]
+```
+
+<div class="text-sm mt-2">
+
+**Syntax:** `break [location] if [condition]`
+
+```
+break utils.c:45 if i == 9999
+break my_func if ptr == 0x0
+```
+
+</div>
+
+---
+layout: terminal-split
+env: gdb-basics
+---
+
+# Reverse Debugging (Time Travel)
+
+*Stepped over a function but the bug was inside it. No need to restart.*
+
+GDB can record state changes and execute instructions **backwards**.
+
+```bash
+gdb ./watchme
+```
+
+```
+(gdb) break main
+(gdb) run
+(gdb) target record-full
+(gdb) continue
+# Program finishes. counter is wrong.
+(gdb) break corrupt
+(gdb) reverse-continue
+# GDB runs BACKWARDS to the last call to corrupt()!
+(gdb) backtrace
+(gdb) info locals
+```
+
+<div class="text-sm mt-2">
+
+| Command | Effect |
+|---------|--------|
+| `target record-full` | Start recording |
+| `reverse-step` (`rs`) | Step backward one line |
+| `reverse-next` (`rn`) | Step back over a call |
+| `reverse-continue` (`rc`) | Run back to prev breakpoint |
+
+</div>
+
+---
+layout: terminal-split
+env: gdb-basics
+---
+
+# Memory Inspection (`x` command)
+
+In *ICS*, you deal with pointers and raw memory. The `x` command reads memory directly.
+
+```bash
+gdb ./memory
+```
+
+```
+(gdb) break main
+(gdb) run
+(gdb) next 3
+(gdb) x/4xw &nums
+(gdb) x/12cb msg
+(gdb) x/5i main
+```
+
+<div class="text-sm mt-2">
+
+**Syntax:** `x/[Count][Format][Size] [Address]`
+
+| Format | Meaning | Size | Meaning |
+|--------|---------|------|---------|
+| `x` | hex | `b` | byte (1) |
+| `d` | decimal | `h` | halfword (2) |
+| `c` | char | `w` | word (4) |
+| `i` | instruction | `g` | giant (8) |
+
+</div>
 
 ---
 layout: end
