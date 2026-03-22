@@ -1270,7 +1270,14 @@ Watchpoint解决的问题是："我的变量被莫名其妙地修改了，但我
 
 Watchpoint利用了CPU的硬件调试寄存器，它会在指定的内存地址被写入时精确地暂停执行。与断点不同的是，你不需要知道bug在哪一行，只需要告诉GDB你想监视哪个变量。
 
-在这个例子中，watchme.c里有一个隐藏的corrupt函数会把counter重置为-1。设置watch counter后，持续按continue，GDB会在每次counter被修改时停下来，你就能精确地找到是corrupt函数干的。
+比如对于程序watchme.c，你发现counter这个变量被修改成了一个错误的值，但你不知道是哪里修改的。你可以在GDB里设置watch counter，这样每次counter被修改时程序都会暂停，然后你就可以检查当前的调用栈，看看是谁修改了counter。
+
+
+1. 首先在main函数设置断点，
+2. 运行程序。
+3. 然后设置watch counter，这样每次counter被修改时程序都会暂停
+4. 持续按continue，直到counter突然变成-1，
+5. 这时候检查backtrace，你就会发现是corrupt函数修改了counter。
 
 
 ```
@@ -1283,6 +1290,9 @@ Watchpoint利用了CPU的硬件调试寄存器，它会在指定的内存地址�
 # suddenly becomes -1. Check the backtrace!
 (gdb) backtrace
 ```
+
+在这个例子中，watchme.c里有一个隐藏的corrupt函数会把counter重置为-1。设置watch counter后，持续按continue，GDB会在每次counter被修改时停下来，你就能精确地找到是corrupt函数干的。
+
 
 -->
 
@@ -1298,6 +1308,7 @@ env: gdb-basics
 Attach a condition to a breakpoint — GDB evaluates it on each hit, but only pauses when `true`.
 
 ```bash
+# Try Conditional Breakpoint
 gdb ./conditional
 ```
 
@@ -1318,16 +1329,29 @@ break my_func if ptr == 0x0
 
 条件断点允许你给断点附加一个布尔表达式。GDB每次命中断点时都会评估这个条件，但只有条件为真时才会暂停执行并把控制权交给你。
 
-在这个例子中，conditional.c在第42次迭代时注入了一个错误值，我们用 break 19 if i == 42 直接跳到第42次迭代。
+
+比如对于程序 `conditional.c`，我们知道fill_array函数的第42次迭代时发生了错误，我们可以直接在第19行设置一个条件断点，条件是i==42，这样GDB就会在第42次迭代时停下来，让我们检查i和arr[i]的值，看看发生了什么。
+
+
+1. 首先在fill_array函数的第一行设置断点，
+2. 运行程序。
+3. 然后在第17行设置条件断点，条件是i==42
+4. 继续运行程序，GDB会在第42次迭代时停下来。
+5. 这时候你可以检查i和arr[i]的值，看看发生了什么。
 
 ```
 (gdb) break fill_array
 (gdb) run
-(gdb) break 19 if i == 42
+(gdb) break 17 if i == 42
 (gdb) continue
 (gdb) print i
 (gdb) print arr[i]
 ```
+
+
+在这个例子中，conditional.c在第42次迭代时注入了一个错误值，我们用 break 17 if i == 42 直接跳到第42次迭代。
+
+
 -->
 
 ---
@@ -1335,27 +1359,13 @@ layout: terminal-split
 env: gdb-basics
 ---
 
-# Reverse Debugging (Time Travel)
+# Reverse Debugging
 
 *Stepped over a function but the bug was inside it. No need to restart.*
 
-GDB can record state changes and execute instructions **backwards**.
-
 ```bash
+# Try Reverse Debugging
 gdb ./watchme
-```
-
-```
-(gdb) break main
-(gdb) run
-(gdb) target record-full
-(gdb) continue
-# Program finishes. counter is wrong.
-(gdb) break corrupt
-(gdb) reverse-continue
-# GDB runs BACKWARDS to the last call to corrupt()!
-(gdb) backtrace
-(gdb) info locals
 ```
 
 <div class="text-sm mt-2">
@@ -1363,16 +1373,40 @@ gdb ./watchme
 | Command | Effect |
 |---------|--------|
 | `target record-full` | Start recording |
-| `reverse-step` (`rs`) | Step backward one line |
-| `reverse-next` (`rn`) | Step back over a call |
-| `reverse-continue` (`rc`) | Run back to prev breakpoint |
+| `reverse-step` | Step backward one line |
+| `reverse-next`| Step back over a call |
+| `reverse-continue` | Run back to prev breakpoint |
 
 </div>
 
 <!--
-这是真正称得上"Fancy"的操作——时间回溯调试。
+一个特别有趣且强大的操作——时间回溯调试。
 
 传统调试中，一旦你step over了一个函数然后发现bug在那个函数里面，就只能重启程序重跑。但GDB的record-full模式可以记录程序执行过程中的所有状态变化（寄存器和内存修改），然后允许你反向执行。
+
+
+对于watchme.c这个程序，我们在之前的例子中发现counter被corrupt函数修改了，但我们是通过watchpoint来监视counter的修改的。现在我们可以用reverse-continue来直接反向运行程序，直到碰到上一个断点，这样就能直接跳回到corrupt函数被调用的地方，查看当时的调用栈和变量状态，而不需要重启程序。
+
+1. 首先在main函数设置断点，
+2. 运行程序。
+3. 跳过printf
+4. 然后启动record-full来记录程序的执行过程。
+5. 继续运行程序，直到counter被修改。
+6. 这时候设置一个断点在corrupt函数，然后用reverse-continue来反向运行程序，直到碰到corrupt函数的断点
+7. 这时候你就可以检查当时的调用栈和变量状态了。
+
+
+```
+(gdb) break main
+(gdb) run
+(gdb) next
+(gdb) target record-full
+(gdb) next
+(gdb) break corrupt
+(gdb) reverse-continue
+(gdb) backtrace
+(gdb) p counters
+```
 
 reverse-continue会让GDB反向运行，直到碰到上一个断点。reverse-step和reverse-next则是逐行反向执行。这个功能可以有效打破大家"GDB难用且落后"的刻板印象——哪个IDE能让你倒着运行程序？
 -->
@@ -1382,21 +1416,12 @@ layout: terminal-split
 env: gdb-basics
 ---
 
-# Memory Inspection (`x` command)
+# Memory Inspection
 
 In *ICS*, you deal with pointers and raw memory. The `x` command reads memory directly.
 
 ```bash
 gdb ./memory
-```
-
-```
-(gdb) break main
-(gdb) run
-(gdb) next 3
-(gdb) x/4xw &nums
-(gdb) x/12cb msg
-(gdb) x/5i main
 ```
 
 <div class="text-sm mt-2">
@@ -1415,11 +1440,21 @@ gdb ./memory
 <!--
 在ICS课程中，你会大量接触指针和原始内存。x命令（examine）可以直接读取内存地址的内容。
 
-x/4xw &nums 的意思是：从nums的地址开始，以十六进制(x)格式，每个word(w)大小（4字节），显示4个单元。你会看到0xDEADBEEF、0xCAFEBABE这些我们在memory.c中设置的魔数。
 
-x/12cb msg 则是以字符(c)格式，每个byte(b)大小，显示12个单元，你会看到"Hello, GDB!"的每个字符。
 
-x/5i main 则是以指令(i)格式显示main函数开头的5条机器指令。
+1. x/4xw &nums 的意思是：从nums的地址开始，以十六进制(x)格式，每个word(w)大小（4字节），显示4个单元。你会看到0xDEADBEEF、0xCAFEBABE这些我们在memory.c中设置的magic number。
+2. x/12cb msg 则是以字符(c)格式，每个byte(b)大小，显示12个单元，你会看到"Hello, GDB!"的每个字符。
+3. x/5i main 则是以指令(i)格式显示main函数开头的5条机器指令。
+
+```
+(gdb) break main
+(gdb) run
+(gdb) next 3
+(gdb) x/4xw &nums
+(gdb) x/12cb msg
+(gdb) x/5i main
+```
+
 -->
 
 ---

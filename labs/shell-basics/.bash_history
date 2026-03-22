@@ -41,3 +41,8 @@ sort -k 2,2n sample.txt
 [ -f .lab.env ] && source .lab.env; clear
 [ -f .lab.env ] && source .lab.env; clear
 echo RESPAWN_OK
+[ -f .lab.env ] && source .lab.env; clear
+[ -f .lab.env ] && source .lab.env; clear
+ls
+[ -f .lab.env ] && source .lab.env; clear
+[ -f .lab.env ] && source .lab.env; clear

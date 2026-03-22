@@ -1,5 +1,6 @@
 # Compiled binaries
 lifecycle
+lifecycle_nodebug
 segfault
 watchme
 conditional
