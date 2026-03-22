@@ -1,0 +1,60 @@
+Line 1: Hello, welcome to the Shell Tutorial!
+Line 2: This is a sample text file for practice.
+Line 3: You can use cat, less, head, tail to view it.
+Line 4: Try grep to search for keywords.
+Line 5: The lucky number is 42.
+Line 6: Shell is powerful and efficient.
+Line 7: Practice makes perfect.
+Line 8: Have fun with the command line!
+Line 9: ICS @ XJTU - 2025
+Line 10: End of file.
+Line 1: Hello, welcome to the Shell Tutorial!
+Line 2: This is a sample text file for practice.
+Line 3: You can use cat, less, head, tail to view it.
+Line 4: Try grep to search for keywords.
+Line 5: The lucky number is 42.
+Line 6: Shell is powerful and efficient.
+Line 7: Practice makes perfect.
+Line 8: Have fun with the command line!
+Line 9: ICS @ XJTU - 2025
+Line 10: End of file.
+Line 1: Hello, welcome to the Shell Tutorial!
+Line 2: This is a sample text file for practice.
+Line 3: You can use cat, less, head, tail to view it.
+Line 4: Try grep to search for keywords.
+Line 5: The lucky number is 42.
+Line 6: Shell is powerful and efficient.
+Line 7: Practice makes perfect.
+Line 8: Have fun with the command line!
+Line 9: ICS @ XJTU - 2025
+Line 10: End of file.
+Line 1: Hello, welcome to the Shell Tutorial!
+Line 2: This is a sample text file for practice.
+Line 3: You can use cat, less, head, tail to view it.
+Line 4: Try grep to search for keywords.
+Line 5: The lucky number is 42.
+Line 6: Shell is powerful and efficient.
+Line 7: Practice makes perfect.
+Line 8: Have fun with the command line!
+Line 9: ICS @ XJTU - 2025
+Line 10: End of file.
+Line 1: Hello, welcome to the Shell Tutorial!
+Line 2: This is a sample text file for practice.
+Line 3: You can use cat, less, head, tail to view it.
+Line 4: Try grep to search for keywords.
+Line 5: The lucky number is 42.
+Line 6: Shell is powerful and efficient.
+Line 7: Practice makes perfect.
+Line 8: Have fun with the command line!
+Line 9: ICS @ XJTU - 2025
+Line 10: End of file.
+Line 1: Hello, welcome to the Shell Tutorial!
+Line 2: This is a sample text file for practice.
+Line 3: You can use cat, less, head, tail to view it.
+Line 4: Try grep to search for keywords.
+Line 5: The lucky number is 42.
+Line 6: Shell is powerful and efficient.
+Line 7: Practice makes perfect.
+Line 8: Have fun with the command line!
+Line 9: ICS @ XJTU - 2025
+Line 10: End of file.

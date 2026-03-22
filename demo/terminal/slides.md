@@ -1,10 +1,10 @@
 ---
 theme: default
-title: Shell Tutorial
+title: Shell & GDB Tutorial
 transition: slide-left
 ---
 
-# `Shell` Tutorial
+# `Shell` & `GDB` Tutorial
 
 <div class="mt-4 text-lg text-gray-400">
 
@@ -14,20 +14,6 @@ transition: slide-left
 
 </div>
 
-<div class="mt-8 text-sm text-gray-500 italic">
-
-**A brief tutorial for beginners**, so feel free to absent if you are familiar with Linux shell 🙉🙈
-
-</div>
-
-<!--
-下午好，我是李雨轩。欢迎来到第二次ICS实验课。
-
-本次tutorial由两部分构成，分别是Shell和GDB调试器。以及BombLab的实验指导。其中Shll由我
-
-开始之前需要说明的一些事情是，无论是Shell还是GDB调试器，都是非常庞大的主题，所以在有限时间内我们无法做到一个step by step的讲解。因此本次tutorial的目的是让大家对Shell和GDB调试器有一个初步的认识，并且认识到它们的重要性。真正想要通过这两个工具提升效率还需要大家进一步学习，本次课程主要希望起到一个引导的作用。
-
--->
 
 ---
 
@@ -43,13 +29,15 @@ As a human being, we are more familiar with GUI, but CLI is also very powerful a
 
 <!--
 
-通俗来讲，shell是OS Kernel和人类之间的交互接口
+我们进入正题
 
-如今计算机有着多种多样的交互接口让我们与之进行交互，有图形界面、命令行界面、语音输入甚至AR、VR等等。
+通俗来讲，shell是OS Kernel和人类之间的交互接口。
 
-对于大家少则几年多则十几年的计算机使用经验，图形界面应该是最为熟悉的。大家已经习惯了在vscode或者一些IDE中编写代码，然后通过鼠标点击按钮来进行编译、运行、调试等操作，也习惯了通过alt+tab来切换不同的窗口，通过鼠标和键盘来进行复制粘贴等操作。
+计算机有着多种多样的交互接口让我们与之进行交互，有图形界面、命令行界面、语音输入甚至AR、VR等等。
 
-不可否认的是，图形界面确实提供了一个很直观的交互界面，并且在90%的场景下都可以满足我们的需求。然而，它们也从根本上限制了你的操作方式——你不能点击一个不存在的按钮，也很难将两个应用程序连接在一起使用。所以为了充分利用计算机的能力，我们不得不回到与计算机交互的最基本的方式——命令行界面CLI。而Linux 系统的shell就是这样一个CLI界面，它是我们与操作系统内核进行交互的接口。
+对于大部分人而言，图形界面应该是最为熟悉的。我们已经习惯了在vscode或者一些IDE中编写代码，然后通过鼠标点击按钮来进行编译、运行、调试等操作，也习惯了通过alt+tab来切换不同的窗口，通过鼠标和键盘来进行复制粘贴等操作。
+
+虽然图形界面确实提供了一个很直观的交互界面，在90%的场景下都可以满足我们的需求。但是它们也从根本上限制了你的操作方式，我们不能点击一个不存在的按钮，也很难将两个应用程序连接在一起使用。所以为了充分利用计算机的能力，我们不得不回到与计算机交互的最基本的方式，也就是命令行界面。
 -->
 
 ---
@@ -73,9 +61,8 @@ As a human being, we are more familiar with GUI, but CLI is also very powerful a
 
 
 <!--
-当然，课程的目的不是让大家放弃图形界面，而是让大家认识到命令行界面具有的优势——展示CLI在许多场景下的高效，以及灵活性和可组合使用的优势。
 
-无论如何，学习使用CLI界面下的shell工具 在**不远的曾经**有很多理由：
+无论如何，学习使用CLI界面下的shell工具有各种各样理由：
 - 服务器通常没有图形界面，许多强大的工具只有CLI版本
 - 你能通过简单的组合命令来达到原本不存在的功能
 - 你能通过编写shell脚本更快捷的实现一些自动化
@@ -86,7 +73,8 @@ As a human being, we are more familiar with GUI, but CLI is also very powerful a
 
 Anthropic 的工程师 在一场关于 Claude Agent SDK 的分享中，提出了一个观点。他认为，最强大的 Agent 工具，不是无数个定制的 API，而是开发者最熟悉的两样东西：Bash 和文件系统。
 
-他表示这套基于 Unix 哲学的 Agent 构建思路，展现出远超传统 API 工具模式的灵活性和潜力。它预示着，AI Agent 不必是一个 API 调用大师，而是一个在虚拟环境中自主工作的工程师。Bash 和它背后的庞大命令行工具生态，是几十年来软件工程的最佳实践沉淀。
+我们也可以发现，越来越多的LLM Agent，特别Code Agent，在执行过程中都会调用shell命令来完成绝大部分操作
+
 
 所以即使是在有这个LLM时代，Shell依然是一个非常重要的工具，如果对于shell不了解，那么或许未来一个你正在vibecoding的下午，一个LLM出现幻觉的下午，夹在一条Shell命令中的一个小小错误被不怎么看得懂Shell的你通过，于是整个生产环境开始崩塌，你所在的企业瞬间崩盘，那时你可能会想，如果我大学时期好好学一下Shell就好了……
 
@@ -105,14 +93,18 @@ Anthropic 的工程师 在一场关于 Claude Agent SDK 的分享中，提出了
 <div class="mt-8" />
 
 4. **GDB**: debug like a pro.
+5. **Advanced GDB**: reverse debugging, watchpoint, conditional breakpoint, etc.
 
 
 <!-- 
-本次tutorial主要从以下几个方面来讲解Shell：首先最基本的是认识shell，以及shell的基本操作；接下来会展示一些shell的实用或者fancy的工具；最后会进一步讨论如何使用shell script来提升工作效率，自动化地完成一些操作。
+本次tutorial主要有如下几个方面：
+
+第一部分是SHell，包括shell的基本操作；实用的工具；以及如何使用shell script来提升工作效率，自动化地完成一些操作。
 
 此外，本次Tutorial的第二部分会介绍GDB调试器以及如何调试。
-GDB非常重要的一个工具，也是是ICS课程实验中非常重要的一环，它可以帮助你排查程序中的bug，理解程序的执行流程，以及分析程序的性能瓶颈。通过学习GDB，你可以更深入地理解计算机系统的工作原理，以及如何编写高效、可靠的代码。
- -->
+
+GDB非常重要的一个工具，也是是ICS课程实验中非常重要的一环，它可以帮助你排查程序中的bug，理解程序的执行流程，以及分析程序的性能瓶颈。
+-->
 
 ---
 layout: section
@@ -152,13 +144,14 @@ ssh <your stuid>-ics@igw.dfshan.net -p2291
 </v-click>
 
 <!--
-想要使用CLI界面与计算机进行交互，首先需要一个terminal，确切来讲是terminal emulator。这个东西是一个运行在图形界面下的程序，它模拟了一个传统的终端。毕竟2025年了，大家应该很难有一个真正的终端了。在Linux下，大家可以使用gnome-terminal、konsole、xterm等等，Windows下也有Windows Terminal供大家使用。
+想要使用CLI界面与计算机进行交互，首先需要一个terminal，确切来讲是terminal emulator。这个东西是一个运行在图形界面下的程序，它模拟了一个传统的终端。毕竟2025年了，大家应该很难有一个真正的终端了。
+打开后，你会得到一个命令行界面，这个界面就是我们与计算机进行交互的接口了
 
-或者大家也可以ssh到远程的Linux服务器上，关于ssh在第一次实验课上已经讲解过了，这里就不再赘述了。
+或者大家也可以按照上次tutorial的方式，通过ssh到远程的Linux服务器上。
 
-当然，如果大家手上有运行某个Linux发行版的电脑，那么可以尝试按下Ctrl+Alt+F1~F6来进入一个virtual console。这个console是一个真正的终端，没有图形界面，只有一个光标在黑屏上闪烁，这个时候你就可以输入你的用户名和密码来登录系统了。
+当然，如果大家手上有运行某个Linux发行版的电脑，那么可以尝试按下Ctrl+Alt+F1~F6来进入一个virtual console。没只有一个光标在黑屏上闪烁，这个时候你就可以输入你的用户名和密码来登录系统了。
 
-现在就会进入一个真正的CLI界面，你会发现有一个提示符跟着一个闪烁的光标，等待你的输入。
+
 -->
 
 ---
@@ -167,13 +160,14 @@ layout: section
 
 ## 2. Shell: The "Shell" of the Kernel
 
-We focus on [`bash shell`](https://www.gnu.org/software/bash/)
+Focus on [`bash shell`](https://www.gnu.org/software/bash/)
 
 
 <!--
-这一切完成后，我们就可以开始使用shell了。Shell是一个运行在CLI环境下的程序，它是用户与操作系统内核之间的接口。用户通过shell来向操作系统内核发送命令，内核接收到命令后执行相应的操作并返回结果给用户。
 
-几乎所有你能够接触到的平台都支持某种形式的shell，有些甚至还提供了多种shell供你选择。在Linux系统中，常见的shell有bash、zsh、sh等等，而在Windows系统中，常见的shell有cmd、powershell等等。作为计算机的学生，我们肯定是以Linux系统为主，并且本节课我们会以Bourne Again Shell（bash）为例来讲解。这是被最广泛使用的一种shell，它的语法和其他的shell都是类似的，它们中的很大一部分都是POSIX shell compatible的。
+几乎所有你能够接触到的平台都支持某种形式的shell，有些甚至还提供了多种shell供你选择。在Linux系统中，常见的shell有bash、zsh、sh等等，而在Windows系统中，常见的shell有cmd、powershell等等。
+
+本次tutorial 我们以 bash为例。这是被最广泛使用的一种shell。
 -->
 
 ---
@@ -221,12 +215,18 @@ echo $PATH
 
 来查看当前的PATH环境变量。
 
+一个在Path下的程序比如 yes 就在/usr/bin目录下，我们可以直接输入yes来执行它。
 
-好，比如我们现在有一个叫welcome的程序，我们可以通过./welcome来执行它，前面的./表示当前目录。或者如果welcome在PATH中的某个目录下，我们也可以直接输入welcome来执行它。比如程序 yes 就在/usr/bin目录下，我们可以直接输入yes来执行它。
+
+
+好，比如我们现在有一个叫welcome的程序，我们可以通过./welcome来执行它，前面的./表示当前目录。
+
 
 [;;;;;;;;;;;;;]
 
-我们可以发现，其实CLI界面的shell和图形界面的操作是一样的，我们都可以创建、管理文件、可以启动程序。在GUI下通过双击图标启动程序。相比于GUI，CLI还可以在程序进入死循环时通过Ctrl+C来终止程序，但是GUI下就不太好操作了，你或许需要打开任务管理器来终止程序。
+命令行界面下有很多操作其实和GUI界面是类似的，我们都可以启动程序。
+
+还可以通过Ctrl+C来终止程序，就像在GUI下打开任务管理器来终止程序。
 
 在shell中同样有前后台的概念，我们可以通过&符号来让程序在后台运行，通过fg命令来将程序调回前台。jobs命令可以查看当前有哪些程序在后台运行，kill命令可以终止一个进程。此外，Ctrl+Z可以将一个程序挂起
 
@@ -254,25 +254,20 @@ Try them out in the terminal →
 
 
 <!--
-在命令行环境下有着大量的命令，这些命令可以帮助我们完成各种各样的任务，例如查看文件内容，创建文件，删除文件，查看进程等等。
+在命令行环境下有着大量的命令，这些命令可以帮助我们完成各种各样的任务
 
-这里大家可以跟着右边的终端一起试一试。pwd查看当前目录，cd切换目录，mkdir创建目录。cat查看文件内容，cp复制文件，less分页查看文件——按q退出。
+pwd查看当前目录，cd切换目录，mkdir创建目录。cat查看文件内容，cp复制文件，less分页查看文件——按q退出。
 
 ```bash
 pwd
 cd /tmp && pwd
 cd - && pwd
 mkdir -p test/sub
-```
-
-
-```bash
+ 
 cat sample.txt
 cp sample.txt copy.txt
-less copy.txt        # press q to quit
-```
-
-```bash
+less long.txt        # press q to quit
+ 
 wc -l sample.txt
 sort sample.txt
 ```
@@ -305,7 +300,7 @@ Usage Scenario: archive files in 1 bundle
 
 
 <!--
-此外还有tar命令，可以用来打包文件。tar是tape archive的缩写，最早是用来将文件打包到磁带上的。现在我们用它来将多个文件或目录打包成一个文件。
+此外还有tar命令，可以用来将多个文件或目录打包成一个文件。
 
 举个例子，现在目录下有一个project目录，我现在想要把她打包成一个archive.tar的文件，我就可以使用tar -cvf archive.tar project/这个命令来实现。-c表示create，-v表示verbose，会显示打包的过程，-f表示指定文件名，archive.tar就是我们要创建的tarball的名字。
 
@@ -323,7 +318,7 @@ ls /tmp/project/
 此外，tar还支持gzip和bzip2等压缩算法，我们可以通过下面的命令把fruits.txt和project目录一起打包成一个压缩包
 
 ```bash
-tar -cvf bundle.tar fruits.txt project/
+tar -cvzf bundle.tar.gz fruits.txt project/
 ```
 
 
@@ -349,17 +344,15 @@ Usage Scenario: search for a specific string in a file
 
 
 <!--
-还有grep命令，可以用来查找文件中的某些内容，它支持正则表达式。grep是Global Regular Expression Print的缩写。
+还有grep命令，可以用来查找文件中的某些内容，它支持正则表达式。
 
 -i可以忽略大小写，-r可以递归搜索整个目录，-n可以显示行号，-v可以反转匹配——也就是显示不包含匹配内容的行。
 
-
-
 1. 我们现在要在fruits.txt这个文件中查找包含apple这个字符串的行，直接使用grep "apple" fruits.txt就可以了。
-2. 如果我们想要知道这个字符串在文件中的哪一行，我们可以加上-n选项，这样就会在输出的每一行前面显示行号。
-3. 如果我们想要忽略大小写来搜索，我们可以加上-i选项，这样就会同时匹配hello、Hello、HELLO等等。
-4. 如我们想要在一个目录下递归搜索，我们可以加上-r选项，这样就会在project目录下的所有文件中搜索包含hello这个字符串的行。
-5. 如果我们想要显示不包含a这个字符串的行，我们可以加上-v选项，这样就会反转匹配，显示所有不包含a的行。
+2. 想要知道这个字符串在文件中的哪一行，我们可以加上-n选项，这样就会在输出的每一行前面显示行号。
+3. 忽略大小写来搜索，我们可以加上-i选项，这样就会同时匹配hello、Hello、HELLO等等。
+4. 在一个目录下递归搜索，我们可以加上-r选项，这样就会在project目录下的所有文件中搜索包含hello这个字符串的行。
+5. 显示不包含a这个字符串的行，我们可以加上-v选项，这样就会反转匹配，显示所有不包含a的行。
 
 ```bash
 grep "apple" fruits.txt 
@@ -483,15 +476,20 @@ How to learn them all?
 </v-click>
 
 <!--
-因为课程实验所迫，你不得不使用Linux，不得不使用十分"落后"的命令行。你一边尝试新的命令，就这样探索着这个陌生的世界。有些时候你或许会遇到invalid command、invalid option、invalid argument等等错误。
+因为课程实验所迫，你不得不使用Linux的命令行。
 
-然后你知道了，这个时候你需要RTFM——Read The Friendly Manual。你需要去阅读手册，去使用man这样一个命令来查看命令的手册。于是在命令行输入man然后敲了回车，只见屏幕上输出了一行信息：What manual page do you want? ……
 
-man是系统自带的手册查看器，几乎所有命令都有对应的man page。
+我们现在解除了不少命令，在使用的过程中总会遇到各种问题。有些时候你或许会遇到invalid command、invalid option、invalid argument等等错误。
+
+对于这些不了解的命令，最好的方式就是去阅读它们的手册了。
+
+<<!!!click>>>
+
+Linux系统自带了一个非常强大的手册查看器，叫做man。你可以通过man命令来查看几乎所有命令都有对应的man page。
 
 ```bash
-man ls
-man -k ipc
+man awk
+man -k memory
 man man
 ```
 
@@ -554,14 +552,18 @@ make
 </v-click>
 
 <!--
-上面介绍的一些命令或者工具有时你会发现在你的系统上并没有安装，这是因为有些命令或者工具并不是所有的Linux发行版都默认安装的，或者还没有被管理员安装。这个时候你可以通过包管理器来安装这些工具。包管理器是一个用来安装、卸载、更新软件包的工具，在不同的Linux发行版上有不同的包管理器，比如apt、yum、pacman等等。
+有时候你可能需要安装一些系统本身不自带的工具，这个时候你可以通过包管理器来安装这些工具。
+
+包管理器是一个用来安装、卸载、更新软件包的工具，在不同的Linux发行版上有不同的包管理器
+
+
+《click!!!> 
 
 当然，绝大部分情况下系统自带的包管理工具安装需要管理员权限，如果你没有管理员权限，那么你就需要通过源码来安装了。
 
-这个时候你需要下载源码，然后解压，然后进入解压后的目录，
+这个时候你需要下载源码，然后解压，然后进入解压后的目录，执行configure、make、make install等操作来安装。
 
-比如一个常见的按照流程如下：
-然后执行configure、make、make install来安装。
+这里展示了一个实例。实际的安装流程可能会因为不同的软件而有所不同，所以你需要仔细阅读软件的README或者INSTALL文档来了解具体的安装步骤
 
 
 -->
@@ -579,6 +581,7 @@ Usage Scenario: manage multiple terminal sessions
 
 - prefix key: <kbd>Ctrl + b</kbd>
 - Client-Server model: `tmux` (server) + `tmux attach` (client)
+- [https://github.com/tmux/tmux/wiki/Getting-Started](https://github.com/tmux/tmux/wiki/Getting-Started)
 
 <!--
 
@@ -586,7 +589,8 @@ Usage Scenario: manage multiple terminal sessions
 
 tmux是一个终端复用器，它可以在一个终端窗口中创建多个会话、窗口和面板。它采用Client-Server模型，即使你断开SSH连接，tmux server中的会话仍然在运行，下次连接时可以通过tmux attach重新接入。
 
-所有快捷键都需要先按prefix key（默认是Ctrl+b），然后再按对应的键。比如Ctrl+b再按%是垂直分屏，Ctrl+b再按"是水平分屏。
+所以如果你有一个长时间运行的任务需要在服务器上执行，或者你需要同时监控多个日志文件，那么使用tmux就是一个非常好的选择。
+
 -->
 
 ---
@@ -602,7 +606,7 @@ A lot of CLI tools — communication is required to do complex jobs.
 </div>
 
 <!--
-回到正题，上面展示的都是shell可以帮助我们执行一些命令，但实际上shell还有一个很重要的功能，就是pipe和重定向。
+回到正题，上面展示了Shell中有很多实用的工具，但是让shell真正好用的地方在于其能够将不同命令连接起来使用
 
 Pipe实际上是操作系统中提到的一种IPC（Inter-Process Communication）方式，大家在操作系统课程中应该学过。通俗来说，它可以将一个程序的输出作为另一个程序的输入，这样就可以将多个程序连接在一起使用，实现更复杂的功能。图很好地展示了这一点。比如我们可以通过 ls | wc -l 来统计当前目录下有多少个文件。
 -->
@@ -618,9 +622,11 @@ Pipe实际上是操作系统中提到的一种IPC（Inter-Process Communication�
 </div>
 
 <!--
-重定向则是将一个程序的输出重定向到一个文件中，或者将一个文件的内容重定向到一个程序中。
+重定向则是将一个程序的输出，输出到一个文件中，或者将一个文件的内容输入到一个程序中。
 
-比如我们可以通过 ls > file.txt 来将ls的输出重定向到file.txt中，通过 cat < file.txt 来将file.txt的内容输出到屏幕上。
+比如图中的命令，ls > files.txt会将ls命令的输出重定向到files.txt这个文件中，这样就会在当前目录下生成一个files.txt的文件，里面包含了ls命令的输出内容。而不会显示在终端上了。
+
+
 -->
 
 ---
@@ -631,13 +637,15 @@ File descriptors:
 - **0** — `stdin`, the standard input stream.
 - **1** — `stdout`, the standard output stream.
 - **2** — `stderr`, the standard error stream.
+- `/dev/null`: the null device, discards all data written to it.
 
 <div class="flex justify-center my-4">
   <img src="./assets/redirect-test.png" alt="redirect test" class="w-2/3" />
 </div>
 
 <!--
-好，我们现在有一个文件同时产生stdout和stderr的输出。如果我们执行>，会发现stderr的内容并没有被重定向到文件中。
+重定向的细节远不止此，
+比如我们现在有一个文件同时产生stdout和stderr的输出。如果我们只简单的使用 大于号 > 符号，会发现stderr的内容并没有被重定向到文件中。
 
 这里就涉及到一个概念：stdout和stderr。stdout是标准输出，stderr是标准错误输出。它们的区别在于stdout是用来输出正常的程序输出，而stderr是用来输出错误信息的。这样做的好处是可以将正常的输出和错误的输出分开。
 
@@ -663,9 +671,8 @@ env: shell-tools
 
 
 <!--
-上面我们展示了一些shell的基本功能，单独来看每一个功能都是很简单的，但是当我们将它们组合在一起使用时，就可以实现很多复杂的功能。
 
-Pipe和重定向就是起到这样一个连接作用。此外还有 $() 用来做命令替换——将命令的执行结果替换到当前位置；<() 是进程替换——将命令的执行结果当做一个临时文件来使用，比如diff命令需要两个文件做比较，我们可以用 <() 将两个ls命令的结果作为"文件"传给diff。
+
 
 这就是shell的强大之处：每个命令都很简单，但组合起来就是一种"自然编程语言"。
 
@@ -680,10 +687,14 @@ Pipe和重定向就是起到这样一个连接作用。此外还有 $() 用来�
 find project/ -type f | wc -l
 
 grep -ro "#include <[^>]*>" project/ | sort | uniq -c | sort -rn
+```
 
 其中<[^>]*>是一个正则表达式，表示匹配以<开头，以>结尾的字符串，中间可以有任意字符但不能有>。
 
+再比如diff命令
+- <() 是进程替换——将命令的执行结果当做一个临时文件来使用
 
+```
 diff <(ls project/src) <(ls project/tests)
 ```
 
