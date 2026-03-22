@@ -59,6 +59,11 @@ let lastSentRows = 0
 
 const RECONNECT_DELAY = 3000
 const RESIZE_DEBOUNCE_MS = 150
+// Minimum terminal dimensions to accept. Slidev may shrink off-screen slide
+// containers during transitions, producing absurdly small sizes (e.g. 9×6)
+// that trigger SIGWINCH and corrupt the prompt layout.
+const MIN_COLS = 20
+const MIN_ROWS = 5
 
 function sendJSON(data: Record<string, unknown>) {
   if (ws?.readyState === WebSocket.OPEN) {
@@ -131,6 +136,9 @@ function performFit() {
     return
   try {
     fitAddon.fit()
+    // Skip absurdly small sizes from hidden/transitioning containers
+    if (term.cols < MIN_COLS || term.rows < MIN_ROWS)
+      return
     // 仅在尺寸实际变化时发送 resize，避免不必要的 SIGWINCH
     if (term.cols !== lastSentCols || term.rows !== lastSentRows) {
       sendJSON({

@@ -83,6 +83,12 @@ PTY_READ_CHUNK = 4096
 DEFAULT_COLS = 80
 DEFAULT_ROWS = 24
 
+# 最小终端尺寸——低于此值的 resize 请求将被忽略。
+# 前端 slide 切换时，不可见容器可能被 CSS 缩到极小，
+# 产生的 SIGWINCH 会导致 bash 在极窄宽度下重绘 prompt，光标错位。
+MIN_COLS = 20
+MIN_ROWS = 5
+
 # ---------------------------------------------------------------------------
 # 日志
 # ---------------------------------------------------------------------------
@@ -551,6 +557,12 @@ async def _handle_resize(ws: Any, msg: dict) -> None:
         await _send_error(ws, "resize 请求缺少 'cols' 或 'rows' 字段")
         return
 
+    cols, rows = int(cols), int(rows)
+
+    # 忽略不合理的极小尺寸（前端 slide 切换时隐藏容器导致）
+    if cols < MIN_COLS or rows < MIN_ROWS:
+        return
+
     env_name = ws_env_map.get(ws)
     if not env_name:
         await _send_error(ws, "尚未 attach 到任何环境")
@@ -567,13 +579,13 @@ async def _handle_resize(ws: Any, msg: dict) -> None:
         return
 
     # 跳过无变化的 resize，避免不必要的 SIGWINCH
-    if session.current_cols == int(cols) and session.current_rows == int(rows):
+    if session.current_cols == cols and session.current_rows == rows:
         return
 
     try:
-        session.process.setwinsize(int(rows), int(cols))
-        session.current_cols = int(cols)
-        session.current_rows = int(rows)
+        session.process.setwinsize(rows, cols)
+        session.current_cols = cols
+        session.current_rows = rows
         log.info("已调整终端尺寸: env=%s, %dx%d", env_name, cols, rows)
     except Exception as e:
         log.error("调整终端尺寸失败 (env=%s): %s", env_name, e)
