@@ -66,7 +66,10 @@ from ptyprocess import PtyProcessUnicode
 # ---------------------------------------------------------------------------
 
 DEFAULT_CONFIG_PATH = "config.yaml"
-DEFAULT_HOST = "0.0.0.0"
+# None → listen on all interfaces (both IPv4 and IPv6).
+# Browsers may resolve "localhost" to ::1 (IPv6), so binding only to
+# 0.0.0.0 (IPv4) would reject those connections.
+DEFAULT_HOST = None
 DEFAULT_PORT = 8765
 
 # 环形输出缓冲区保留的最大字节数。
@@ -677,11 +680,13 @@ async def main() -> None:
         )
 
     # 启动 WebSocket 服务器
-    host = os.environ.get("TERMISLIDE_HOST", DEFAULT_HOST)
+    host_env = os.environ.get("TERMISLIDE_HOST")
+    host = host_env if host_env else DEFAULT_HOST
     port = int(os.environ.get("TERMISLIDE_PORT", str(DEFAULT_PORT)))
 
     async with websockets.serve(ws_handler, host, port):
-        log.info("TermiSlide Daemon 已启动: ws://%s:%d", host, port)
+        display_host = host or "[::/0.0.0.0]"
+        log.info("TermiSlide Daemon 已启动: ws://%s:%d", display_host, port)
         log.info("等待 WebSocket 客户端连接...")
 
         # 等待关闭信号
