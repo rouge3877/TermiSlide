@@ -268,20 +268,28 @@ async def spawn_pty(env: EnvConfig, cols: int = DEFAULT_COLS, rows: int = DEFAUL
     """
     log.info("正在为环境 '%s' 衍生 PTY (cwd=%s, size=%dx%d)", env.name, env.path, cols, rows)
 
+    # 构建子进程环境变量：将 HOME 设为实验目录，使 vim、tmux、gdb
+    # 等工具从该目录读取各自的 rc 文件（.vimrc, .tmux.conf, .gdbinit 等），
+    # 实现每个 lab 环境的配置隔离。
+    child_env = os.environ.copy()
+    child_env["HOME"] = env.path
+
     # 衍生 bash 进程，dimensions=(rows, cols)
     process = PtyProcessUnicode.spawn(
         ["/bin/bash"],
         dimensions=(rows, cols),
+        cwd=env.path,
+        env=child_env,
     )
 
     session = PTYSession(env_name=env.name, process=process)
     pty_sessions[env.name] = session
 
     # 向 bash 发送初始化指令：
-    #   - cd 到环境目录
-    #   - source .lab.env（如果存在）加载环境变量
+    #   - source .lab.env（如果存在）加载环境变量和自定义 PS1
     #   - clear 清屏，给前端一个干净的起点
-    init_cmd = f"cd {env.path} && [ -f .lab.env ] && source .lab.env; clear\n"
+    # cwd 和 HOME 已在 spawn 时设置，无需再 cd。
+    init_cmd = "[ -f .lab.env ] && source .lab.env; clear\n"
     process.write(init_cmd)
 
     # 启动异步读取循环

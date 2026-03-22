@@ -171,7 +171,7 @@ onMounted(() => {
 
   term = new Terminal({
     cursorBlink: true,
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: '\'Cascadia Code\', \'Fira Code\', Menlo, Monaco, \'Courier New\', monospace',
     theme: {
       background: '#1e1e2e',
