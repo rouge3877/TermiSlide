@@ -47,6 +47,7 @@ from __future__ import annotations
 
 import asyncio
 import collections
+import fcntl
 import json
 import logging
 import os
@@ -295,7 +296,7 @@ async def _pty_read_loop(session: PTYSession) -> None:
     循环的 I/O 多路复用器（Linux 上为 epoll）。
 
     工作流：
-    1. 获取 PTY 的 master fd
+    1. 获取 PTY 的 master fd，设置 O_NONBLOCK
     2. 创建一个 asyncio.Event 作为"可读"信号
     3. 用 add_reader(fd, event.set) 注册回调
     4. 主循环中 await event.wait() —— 零 CPU 开销等待
@@ -303,13 +304,17 @@ async def _pty_read_loop(session: PTYSession) -> None:
     6. 将数据存入缓冲区 + 广播给所有客户端
     7. 重置 event，继续等待
 
-    这种方式比 run_in_executor(blocking_read) 更高效，因为：
-    - 无需线程池，减少上下文切换开销
-    - 直接利用内核的 I/O 通知机制
-    - 与 asyncio 事件循环完美集成
+    注意：PTY fd 默认为阻塞模式。必须显式设置 O_NONBLOCK，否则
+    add_reader 回调与 os.read() 之间的竞态可能导致 os.read() 阻塞
+    整个事件循环，使 WebSocket 服务器无法处理新连接。
     """
     loop = asyncio.get_running_loop()
     fd = session.process.fd
+
+    # 关键：将 PTY fd 设为非阻塞模式，防止 os.read() 阻塞事件循环
+    flags = fcntl.fcntl(fd, fcntl.F_GETFL)
+    fcntl.fcntl(fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+
     readable_event = asyncio.Event()
 
     def _on_readable():
@@ -325,8 +330,10 @@ async def _pty_read_loop(session: PTYSession) -> None:
             await readable_event.wait()
 
             try:
-                # 非阻塞读取：此时 fd 已确认可读，os.read 不会阻塞
                 raw = os.read(fd, PTY_READ_CHUNK)
+            except BlockingIOError:
+                # add_reader 触发但数据尚未就绪（竞态），安全跳过
+                continue
             except OSError:
                 # fd 关闭或进程退出
                 log.info("环境 '%s' PTY 读取结束 (fd 关闭)", session.env_name)
